@@ -249,6 +249,9 @@ window.App = {
     async loadNoteContent(note) {
         this.dom.spinner.style.display = 'block';
         try {
+            // Store current note for delete functionality
+            this.state.currentNote = note;
+
             // We can use the download_url or fetch via API to be safe with CORS
             const response = await fetch(note.url, {
                 headers: {
@@ -268,7 +271,11 @@ window.App = {
                 .replace(/^## (.*$)/gim, '<h2>$1</h2>')
                 .replace(/\n/gim, '<br>');
 
-            this.dom.detailContent.innerHTML = html;
+            this.dom.detailContent.innerHTML = html + `
+                <div style="margin-top: 30px; text-align: center;">
+                    <button class="btn-delete" onclick="window.App.deleteNote()">🗑️ Vymazať poznámku</button>
+                </div>
+            `;
             this.router('detail-view');
         } catch (e) {
             alert(e.message);
@@ -323,6 +330,66 @@ window.App = {
         } finally {
             this.dom.btnSave.disabled = false;
             this.dom.btnSave.innerText = 'Uložiť';
+        }
+    },
+
+    async deleteNote() {
+        if (!this.state.currentNote) {
+            alert('Žiadna poznámka nie je vybraná');
+            return;
+        }
+
+        const confirmDelete = confirm('Naozaj chcete vymazať túto poznámku? Táto akcia sa nedá vrátiť späť.');
+        if (!confirmDelete) return;
+
+        this.dom.spinner.style.display = 'block';
+
+        try {
+            const { owner, repo, token } = this.state.config;
+            const note = this.state.currentNote;
+
+            // First, get the file SHA (required for deletion)
+            const getResponse = await fetch(note.url, {
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+
+            if (!getResponse.ok) {
+                throw new Error(`Chyba načítania súboru: ${getResponse.status}`);
+            }
+
+            const fileData = await getResponse.json();
+            const sha = fileData.sha;
+
+            // Delete the file
+            const deleteUrl = `https://api.github.com/repos/${owner}/${repo}/contents/notes/${note.name}`;
+            const deleteResponse = await fetch(deleteUrl, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: `Delete note: ${note.name}`,
+                    sha: sha
+                })
+            });
+
+            if (!deleteResponse.ok) {
+                const err = await deleteResponse.json();
+                throw new Error(err.message || `Chyba vymazania: ${deleteResponse.status}`);
+            }
+
+            // Success - go back to list and refresh
+            this.state.currentNote = null;
+            this.router('list-view');
+            this.fetchNotes();
+        } catch (e) {
+            alert('Chyba pri vymazávaní: ' + e.message);
+        } finally {
+            this.dom.spinner.style.display = 'none';
         }
     },
 
