@@ -1,27 +1,29 @@
 <!DOCTYPE html>
 <html lang="sk">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="GitNotes">
-    
+
     <title>GitNotes</title>
-    
+
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="https://placehold.co/192x192/007AFF/FFFFFF.png?text=GN">
 </head>
+
 <body>
 
     <!-- Navigation Bar -->
     <header>
         <button id="btn-settings" style="display:none;">⚙️</button>
         <button id="btn-back" style="display:none;">spať</button>
-        
+
         <h1 id="nav-title">GitNotes</h1>
-        
+
         <button id="btn-add" style="display:none;">✏️</button>
         <button id="btn-save" style="display:none;">Uložiť</button>
     </header>
@@ -68,16 +70,12 @@
         <div class="editor-container">
             <input type="text" id="note-title" class="title-input" placeholder="Nadpis poznámky">
             <div id="filename-preview" class="filename-preview"></div>
-            
+
             <textarea id="note-body" class="body-input" placeholder="Začnite písať..."></textarea>
-            
-            <!-- Toolbar for dictation -->
-            <div class="toolbar">
-                <button id="btn-mic" class="mic-btn">🎙</button>
-            </div>
         </div>
     </div>
 
     <script src="app.js"></script>
 </body>
+
 </html>

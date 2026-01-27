@@ -54,7 +54,6 @@ window.App = {
             inputTitle: document.getElementById('note-title'),
             inputBody: document.getElementById('note-body'),
             previewFilename: document.getElementById('filename-preview'),
-            btnMic: document.getElementById('btn-mic'),
 
             // Detail
             detailContent: document.getElementById('detail-content')
@@ -80,7 +79,6 @@ window.App = {
         // Editor
         this.dom.inputTitle.addEventListener('input', () => this.updateFilenamePreview());
         this.dom.btnSave.addEventListener('click', () => this.saveNote());
-        this.dom.btnMic.addEventListener('click', () => this.toggleDictation());
     },
 
     // --- Configuration ---
@@ -417,52 +415,6 @@ window.App = {
 
     closeEditor() {
         this.router('list-view');
-    },
-
-    // --- Dictation ---
-    toggleDictation() {
-        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-            alert('Váš prehliadač nepodporuje diktovanie.');
-            return;
-        }
-
-        if (this.isRecording) {
-            this.recognition.stop();
-            return;
-        }
-
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        this.recognition = new SpeechRecognition();
-        this.recognition.lang = 'sk-SK';
-        this.recognition.continuous = false;
-        this.recognition.interimResults = false;
-
-        this.recognition.onstart = () => {
-            this.isRecording = true;
-            this.dom.btnMic.classList.add('recording');
-        };
-
-        this.recognition.onresult = (event) => {
-            const transcript = event.results[0][0].transcript;
-            // Append to body
-            this.dom.inputBody.value += (this.dom.inputBody.value ? ' ' : '') + transcript;
-        };
-
-        this.recognition.onerror = (event) => {
-            console.error(event.error);
-            this.stopDictationUI();
-        };
-
-        this.recognition.onend = () => {
-            this.stopDictationUI();
-        };
-
-        this.recognition.start();
-    },
-
-    stopDictationUI() {
-        this.isRecording = false;
-        this.dom.btnMic.classList.remove('recording');
     }
 };
 

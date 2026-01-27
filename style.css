@@ -254,52 +254,6 @@ textarea.body-input {
     }
 }
 
-/* --- Toolbar --- */
-.toolbar {
-    background-color: var(--ios-navbar-bg);
-    border-top: 0.5px solid var(--ios-separator);
-    height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-}
-
-.mic-btn {
-    border-radius: 50%;
-    width: 44px;
-    height: 44px;
-    background-color: var(--ios-blue);
-    color: white;
-    border: none;
-    font-size: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-}
-
-.mic-btn.recording {
-    background-color: var(--ios-red);
-    animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-    0% {
-        transform: scale(1);
-    }
-
-    50% {
-        transform: scale(1.1);
-    }
-
-    100% {
-        transform: scale(1);
-    }
-}
-
 /* --- Delete Button --- */
 .btn-delete {
     background-color: var(--ios-red);
