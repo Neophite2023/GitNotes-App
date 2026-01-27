@@ -40,6 +40,7 @@ window.App = {
             btnSettings: document.getElementById('btn-settings'),
             btnSave: document.getElementById('btn-save'),
             btnDeleteNav: document.getElementById('btn-delete-nav'),
+            btnEdit: document.getElementById('btn-edit'),
 
             // Settings
             inputOwner: document.getElementById('conf-owner'),
@@ -81,6 +82,7 @@ window.App = {
         this.dom.inputTitle.addEventListener('input', () => this.updateFilenamePreview());
         this.dom.btnSave.addEventListener('click', () => this.saveNote());
         this.dom.btnDeleteNav.addEventListener('click', () => this.deleteNote());
+        this.dom.btnEdit.addEventListener('click', () => this.startEditing());
     },
 
     // --- Configuration ---
@@ -128,6 +130,7 @@ window.App = {
         this.dom.btnAdd.style.display = 'none';
         this.dom.btnSave.style.display = 'none';
         this.dom.btnDeleteNav.style.display = 'none';
+        this.dom.btnEdit.style.display = 'none';
 
         // View transitions
         this.dom.views.forEach(v => v.classList.remove('active'));
@@ -156,6 +159,7 @@ window.App = {
                 this.dom.navTitle.innerText = 'Detail';
                 this.dom.btnBack.style.display = 'block';
                 this.dom.btnDeleteNav.style.display = 'block';
+                this.dom.btnEdit.style.display = 'block';
                 break;
         }
     },
@@ -268,6 +272,9 @@ window.App = {
             if (!response.ok) throw new Error(`Chyba obsahu: ${response.status} ${response.statusText}`);
             const text = await response.text();
 
+            // Store raw text for editing
+            this.state.currentNoteContentRaw = text;
+
             // Simple "Markdown" rendering:
             // 1. Headers to H
             // 2. Newlines to BR
@@ -294,26 +301,46 @@ window.App = {
         this.dom.btnSave.disabled = true;
         this.dom.btnSave.innerText = 'Ukladám...';
 
-        const filename = this.formatFilename(title);
         const { owner, repo, token } = this.state.config;
+        let filename = this.formatFilename(title);
+        let sha = null;
+        let method = 'PUT';
 
-        // Create full markdown content
+        // If editing, use existing filename and get latest SHA
+        if (this.state.isEditing && this.state.currentNote) {
+            filename = this.state.currentNote.name;
+            // Get latest SHA before saving to prevent conflict
+            try {
+                const headRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/notes/${filename}`, {
+                    headers: { 'Authorization': `token ${token}` }
+                });
+                if (headRes.ok) {
+                    const headData = await headRes.json();
+                    sha = headData.sha;
+                }
+            } catch (e) {
+                console.warn("Could not fetch latest SHA, trying with cached one if exists");
+                sha = this.state.currentNote.sha;
+            }
+        }
+
         const date = new Date().toLocaleString('sk-SK');
-        const content = `# ${title}\n\n*${date}*\n\n---\n\n${body}`;
+        const content = this.state.isEditing ? body : `# ${title}\n\n*${date}*\n\n---\n\n${body}`;
 
         const contentBase64 = btoa(unescape(encodeURIComponent(content))); // UTF-8 safe base64
 
         try {
             const url = `https://api.github.com/repos/${owner}/${repo}/contents/notes/${filename}`;
             const response = await fetch(url, {
-                method: 'PUT',
+                method: method,
                 headers: {
                     'Authorization': `token ${token}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    message: `Add note: ${title}`,
-                    content: contentBase64
+                    message: `${this.state.isEditing ? 'Update' : 'Add'} note: ${title}`,
+                    content: contentBase64,
+                    sha: sha // Include SHA for updates
                 })
             });
 
@@ -425,10 +452,34 @@ window.App = {
     },
 
     openEditor() {
+        this.state.isEditing = false;
         this.dom.inputTitle.value = '';
         this.dom.inputBody.value = '';
         this.dom.previewFilename.innerText = '';
+        this.dom.inputTitle.disabled = false;
         this.router('editor-view');
+    },
+
+    startEditing() {
+        if (!this.state.currentNote || !this.state.currentNoteContentRaw) return;
+
+        this.state.isEditing = true;
+
+        // Populate inputs
+        const cleanName = this.state.currentNote.name.replace('.md', '').split('_').slice(2).join(' ') || this.state.currentNote.name;
+        this.dom.inputTitle.value = cleanName;
+
+        // Strip the header if it exists to just edit the body, or just put the whole thing in?
+        // Let's put the whole thing in for now to avoid logic errors with stripping, 
+        // OR better yet, just leave the body as is if we want real "editing".
+        // Actually, for simple PWA, let's just put the raw markdown in.
+        this.dom.inputBody.value = this.state.currentNoteContentRaw;
+
+        this.dom.previewFilename.innerText = this.state.currentNote.name;
+        this.dom.inputTitle.disabled = true; // Don't allow changing title (which changes filename) for now
+
+        this.router('editor-view');
+        this.dom.navTitle.innerText = 'Upraviť poznámku';
     },
 
     closeEditor() {
