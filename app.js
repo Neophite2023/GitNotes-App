@@ -346,8 +346,11 @@ window.App = {
             const { owner, repo, token } = this.state.config;
             const note = this.state.currentNote;
 
+            // Construct the correct API URL for the file
+            const fileUrl = `https://api.github.com/repos/${owner}/${repo}/contents/notes/${note.name}`;
+
             // First, get the file SHA (required for deletion)
-            const getResponse = await fetch(note.url, {
+            const getResponse = await fetch(fileUrl, {
                 headers: {
                     'Authorization': `token ${token}`,
                     'Accept': 'application/vnd.github.v3+json'
@@ -355,15 +358,14 @@ window.App = {
             });
 
             if (!getResponse.ok) {
-                throw new Error(`Chyba načítania súboru: ${getResponse.status}`);
+                throw new Error(`Chyba načítania súboru: ${getResponse.status} ${getResponse.statusText}`);
             }
 
             const fileData = await getResponse.json();
             const sha = fileData.sha;
 
-            // Delete the file
-            const deleteUrl = `https://api.github.com/repos/${owner}/${repo}/contents/notes/${note.name}`;
-            const deleteResponse = await fetch(deleteUrl, {
+            // Delete the file using the same URL
+            const deleteResponse = await fetch(fileUrl, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `token ${token}`,
