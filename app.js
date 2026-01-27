@@ -247,11 +247,14 @@ window.App = {
     async loadNoteContent(note) {
         this.dom.spinner.style.display = 'block';
         try {
-            // Store current note for delete functionality
+            // Store full note object for delete functionality
             this.state.currentNote = note;
 
             // We can use the download_url or fetch via API to be safe with CORS
-            const response = await fetch(note.url, {
+            // Ensure we use the correct URL property
+            const fetchUrl = note.git_url || note.url;
+
+            const response = await fetch(fetchUrl, {
                 headers: {
                     'Authorization': `token ${this.state.config.token}`,
                     'Accept': 'application/vnd.github.v3.raw' // Raw content
@@ -346,8 +349,14 @@ window.App = {
             const { owner, repo, token } = this.state.config;
             const note = this.state.currentNote;
 
+            // Debug logging
+            console.log('Delete note - currentNote:', note);
+            console.log('Delete note - owner:', owner, 'repo:', repo);
+            console.log('Delete note - note.name:', note.name);
+
             // Construct the correct API URL for the file
             const fileUrl = `https://api.github.com/repos/${owner}/${repo}/contents/notes/${note.name}`;
+            console.log('Delete note - fileUrl:', fileUrl);
 
             // First, get the file SHA (required for deletion)
             const getResponse = await fetch(fileUrl, {
@@ -357,12 +366,16 @@ window.App = {
                 }
             });
 
+            console.log('Delete note - getResponse status:', getResponse.status);
+
             if (!getResponse.ok) {
                 throw new Error(`Chyba načítania súboru: ${getResponse.status} ${getResponse.statusText}`);
             }
 
             const fileData = await getResponse.json();
             const sha = fileData.sha;
+
+            console.log('Delete note - SHA:', sha);
 
             // Delete the file using the same URL
             const deleteResponse = await fetch(fileUrl, {
@@ -377,6 +390,8 @@ window.App = {
                 })
             });
 
+            console.log('Delete note - deleteResponse status:', deleteResponse.status);
+
             if (!deleteResponse.ok) {
                 const err = await deleteResponse.json();
                 throw new Error(err.message || `Chyba vymazania: ${deleteResponse.status}`);
@@ -387,6 +402,7 @@ window.App = {
             this.router('list-view');
             this.fetchNotes();
         } catch (e) {
+            console.error('Delete note error:', e);
             alert('Chyba pri vymazávaní: ' + e.message);
         } finally {
             this.dom.spinner.style.display = 'none';
@@ -395,11 +411,11 @@ window.App = {
 
     // --- Rendering ---
     renderList() {
-        const html = this.state.notes.map(note => {
+        const html = this.state.notes.map((note, index) => {
             const cleanName = note.name.replace('.md', '').split('_').slice(2).join(' ') || note.name;
             const datePart = note.name.split('_').slice(0, 2).join(' ');
             return `
-                <li class="note-item" onclick="window.App.loadNoteContent({url: '${note.url}'})">
+                <li class="note-item" onclick="window.App.loadNoteContent(window.App.state.notes[${index}])">
                     <div class="note-title">${cleanName}</div>
                     <div class="note-date">${datePart}</div>
                 </li>
