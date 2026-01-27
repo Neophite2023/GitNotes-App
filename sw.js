@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gitnotes-v1';
+const CACHE_NAME = 'gitnotes-v2';
 const ASSETS = [
     './',
     './index.html',
