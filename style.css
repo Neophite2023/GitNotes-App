@@ -270,3 +270,11 @@ textarea.body-input {
 .btn-delete:active {
     opacity: 0.8;
 }
+
+.btn-delete-nav:active {
+    opacity: 0.8;
+}
+
+#btn-delete-nav {
+    color: var(--ios-red);
+}

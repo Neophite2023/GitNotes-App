@@ -39,6 +39,7 @@ window.App = {
             btnAdd: document.getElementById('btn-add'),
             btnSettings: document.getElementById('btn-settings'),
             btnSave: document.getElementById('btn-save'),
+            btnDeleteNav: document.getElementById('btn-delete-nav'),
 
             // Settings
             inputOwner: document.getElementById('conf-owner'),
@@ -79,6 +80,7 @@ window.App = {
         // Editor
         this.dom.inputTitle.addEventListener('input', () => this.updateFilenamePreview());
         this.dom.btnSave.addEventListener('click', () => this.saveNote());
+        this.dom.btnDeleteNav.addEventListener('click', () => this.deleteNote());
     },
 
     // --- Configuration ---
@@ -125,6 +127,7 @@ window.App = {
         this.dom.btnSettings.style.display = 'none';
         this.dom.btnAdd.style.display = 'none';
         this.dom.btnSave.style.display = 'none';
+        this.dom.btnDeleteNav.style.display = 'none';
 
         // View transitions
         this.dom.views.forEach(v => v.classList.remove('active'));
@@ -152,6 +155,7 @@ window.App = {
             case 'detail-view':
                 this.dom.navTitle.innerText = 'Detail';
                 this.dom.btnBack.style.display = 'block';
+                this.dom.btnDeleteNav.style.display = 'block';
                 break;
         }
     },
@@ -272,11 +276,7 @@ window.App = {
                 .replace(/^## (.*$)/gim, '<h2>$1</h2>')
                 .replace(/\n/gim, '<br>');
 
-            this.dom.detailContent.innerHTML = html + `
-                <div style="margin-top: 30px; text-align: center;">
-                    <button class="btn-delete" onclick="window.App.deleteNote()">🗑️ Vymazať poznámku</button>
-                </div>
-            `;
+            this.dom.detailContent.innerHTML = html;
             this.router('detail-view');
         } catch (e) {
             alert(e.message);
