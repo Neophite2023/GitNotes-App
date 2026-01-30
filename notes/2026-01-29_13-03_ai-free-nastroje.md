@@ -1,4 +1,4 @@
-# AI free nastroje
+# AI free nastroj
 
 *29. 1. 2026 13:03:06*
 
