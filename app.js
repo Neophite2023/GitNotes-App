@@ -306,21 +306,36 @@ window.App = {
         let sha = null;
         let method = 'PUT';
 
-        // If editing, use existing filename and get latest SHA
+        let isRename = false;
+        let oldFilename = null;
+        let oldSha = null;
+
+        // If editing, check if filename changed
         if (this.state.isEditing && this.state.currentNote) {
-            filename = this.state.currentNote.name;
-            // Get latest SHA before saving to prevent conflict
-            try {
-                const headRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/notes/${filename}`, {
-                    headers: { 'Authorization': `token ${token}` }
-                });
-                if (headRes.ok) {
-                    const headData = await headRes.json();
-                    sha = headData.sha;
+            const currentFilename = this.state.currentNote.name;
+
+            if (filename !== currentFilename) {
+                // RENAME DETECTED: We are creating a NEW file (filename) and will DELETE the OLD one (currentFilename)
+                isRename = true;
+                oldFilename = currentFilename;
+                oldSha = this.state.currentNote.sha;
+                // sha stays null because we are creating a new file
+            } else {
+                // Normal update to existing file
+                filename = currentFilename;
+                // Get latest SHA before saving to prevent conflict
+                try {
+                    const headRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/notes/${filename}`, {
+                        headers: { 'Authorization': `token ${token}` }
+                    });
+                    if (headRes.ok) {
+                        const headData = await headRes.json();
+                        sha = headData.sha;
+                    }
+                } catch (e) {
+                    console.warn("Could not fetch latest SHA, trying with cached one if exists");
+                    sha = this.state.currentNote.sha;
                 }
-            } catch (e) {
-                console.warn("Could not fetch latest SHA, trying with cached one if exists");
-                sha = this.state.currentNote.sha;
             }
         }
 
@@ -330,6 +345,7 @@ window.App = {
         const contentBase64 = btoa(unescape(encodeURIComponent(content))); // UTF-8 safe base64
 
         try {
+            // 1. Create/Update the note
             const url = `https://api.github.com/repos/${owner}/${repo}/contents/notes/${filename}`;
             const response = await fetch(url, {
                 method: method,
@@ -340,13 +356,33 @@ window.App = {
                 body: JSON.stringify({
                     message: `${this.state.isEditing ? 'Update' : 'Add'} note: ${title}`,
                     content: contentBase64,
-                    sha: sha // Include SHA for updates
+                    sha: sha // Include SHA for updates, null for new files
                 })
             });
 
             if (!response.ok) {
                 const err = await response.json();
                 throw new Error(err.message || `Chyba ukladania: ${response.status}`);
+            }
+
+            // 2. If it was a rename, DELETE the old file
+            if (isRename && oldFilename) {
+                console.log(`Renaming: Deleting old file ${oldFilename}`);
+                const deleteUrl = `https://api.github.com/repos/${owner}/${repo}/contents/notes/${oldFilename}`;
+
+                // We assume oldSha is valid enough. Ideally we should double check, but for now we try.
+                // If the user edited the file elsewhere, this delete might fail, but the new file is already safe.
+                await fetch(deleteUrl, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: `Renamed to ${filename}`,
+                        sha: oldSha
+                    })
+                });
             }
 
             // Success
@@ -476,7 +512,7 @@ window.App = {
         this.dom.inputBody.value = this.state.currentNoteContentRaw;
 
         this.dom.previewFilename.innerText = this.state.currentNote.name;
-        this.dom.inputTitle.disabled = true; // Don't allow changing title (which changes filename) for now
+        this.dom.inputTitle.disabled = false; // Allow editing title now!
 
         this.router('editor-view');
         this.dom.navTitle.innerText = 'Upraviť poznámku';
