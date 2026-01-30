@@ -345,3 +345,42 @@ textarea.body-input {
 .btn-delete:active {
     background-color: var(--ios-danger-bg);
 }
+
+/* --- Search Bar (iOS Style) --- */
+.search-container {
+    padding: 10px 16px;
+    background-color: var(--ios-bg);
+    position: sticky;
+    top: 0;
+    z-index: 90;
+}
+
+.search-bar {
+    background-color: rgba(118, 118, 128, 0.12);
+    /* iOS Search Field Gray */
+    border-radius: 10px;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.search-bar input {
+    border: none;
+    background: transparent;
+    font-size: 17px;
+    color: var(--ios-text);
+    width: 100%;
+    outline: none;
+    padding: 0;
+    margin: 0;
+}
+
+.search-bar input::placeholder {
+    color: var(--ios-text-secondary);
+}
+
+/* Adjust Note List margin since search is above */
+.note-list {
+    margin-top: 0 !important;
+}

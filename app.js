@@ -57,6 +57,9 @@ window.App = {
             inputBody: document.getElementById('note-body'),
             previewFilename: document.getElementById('filename-preview'),
 
+            // Search
+            searchInput: document.getElementById('search-input'),
+
             // Detail
             detailContent: document.getElementById('detail-content')
         };
@@ -77,6 +80,14 @@ window.App = {
 
         // Settings
         this.dom.btnSaveConfig.addEventListener('click', () => this.saveConfig());
+
+        // Search
+        if (this.dom.searchInput) {
+            this.dom.searchInput.addEventListener('input', (e) => {
+                this.state.searchQuery = e.target.value;
+                this.renderList();
+            });
+        }
 
         // Editor
         this.dom.inputTitle.addEventListener('input', () => this.updateFilenamePreview());
@@ -474,17 +485,51 @@ window.App = {
 
     // --- Rendering ---
     renderList() {
-        const html = this.state.notes.map((note, index) => {
+        const query = (this.state.searchQuery || '').toLowerCase();
+
+        const filteredNotes = this.state.notes.filter(note => {
+            if (!query) return true;
+            const name = note.name.toLowerCase();
+            return name.includes(query);
+        });
+
+        if (filteredNotes.length === 0) {
+            this.dom.listContainer.innerHTML = `
+                <li style="padding: 20px; text-align: center; color: var(--ios-text-secondary);">
+                    Žiadne poznámky
+                </li>
+            `;
+            return;
+        }
+
+        const html = filteredNotes.map((note) => {
+            // Find original index to keep load working correctly? 
+            // Actually loadNoteContent takes the note object, not index. 
+            // WAIT! The original code passed `window.App.state.notes[index]`.
+            // If we filter, the index changes!
+            // We need to pass the NOTE OBJECT directly or finding it in the main array.
+            // Let's modify the onclick to pass the name and find it, OR bind the object differently.
+            // Simplest way: The note object is available in the loop. We can assign it to a temporary map or just find it.
+            // Actually, `onclick` is HTML string. We can't pass object ref easily.
+            // We will fix this by lookup.
+
             const cleanName = note.name.replace('.md', '').split('_').slice(2).join(' ') || note.name;
             const datePart = note.name.split('_').slice(0, 2).join(' ');
+
+            // We need a safe way to call load. Using global function or finding by name.
             return `
-                <li class="note-item" onclick="window.App.loadNoteContent(window.App.state.notes[${index}])">
+                <li class="note-item" onclick="window.App.loadNoteByName('${note.name}')">
                     <div class="note-title">${cleanName}</div>
                     <div class="note-date">${datePart}</div>
                 </li>
             `;
         }).join('');
         this.dom.listContainer.innerHTML = html;
+    },
+
+    loadNoteByName(name) {
+        const note = this.state.notes.find(n => n.name === name);
+        if (note) this.loadNoteContent(note);
     },
 
     openEditor() {
