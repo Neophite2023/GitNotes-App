@@ -3,22 +3,27 @@
     --ios-card: #FFFFFF;
     --ios-text: #000000;
     --ios-text-secondary: #8E8E93;
+    /* systemGray */
     --ios-blue: #007AFF;
     --ios-red: #FF3B30;
     --ios-separator: #C6C6C8;
-    --ios-navbar-bg: rgba(249, 249, 249, 0.94);
+    /* systemGray3 or 4 usually */
+    --ios-navbar-bg: rgba(255, 255, 255, 0.85);
+    --ios-danger-bg: rgba(255, 59, 48, 0.1);
 
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
     :root {
         --ios-bg: #000000;
         --ios-card: #1C1C1E;
+        /* systemGray6 for grouped content */
         --ios-text: #FFFFFF;
         --ios-text-secondary: #98989F;
         --ios-separator: #38383A;
-        --ios-navbar-bg: rgba(29, 29, 29, 0.94);
+        --ios-navbar-bg: rgba(29, 29, 29, 0.85);
+        --ios-danger-bg: rgba(255, 69, 58, 0.15);
     }
 }
 
@@ -41,10 +46,11 @@ body {
 /* --- Navigation Bar --- */
 header {
     background-color: var(--ios-navbar-bg);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border-bottom: 0.5px solid var(--ios-separator);
     height: 44px;
+    /* Standard iOS nav bar height */
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -61,7 +67,7 @@ header h1 {
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
-    width: 40%;
+    width: 60%;
     text-align: center;
     white-space: nowrap;
     overflow: hidden;
@@ -73,8 +79,11 @@ header h1 {
 .nav-right {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 16px;
+    /* Expanded tap targert spacing */
     z-index: 101;
+    min-width: 44px;
+    /* Ensure space exists */
 }
 
 .nav-left {
@@ -93,7 +102,20 @@ header button {
     color: var(--ios-blue);
     font-size: 17px;
     cursor: pointer;
-    padding: 8px 0;
+    padding: 8px 4px;
+    /* Ensure 44px touch target height */
+    margin: 0;
+    font-weight: 400;
+}
+
+header button:active {
+    opacity: 0.5;
+}
+
+header button#btn-save,
+header button#btn-save-config {
+    font-weight: 600;
+    /* Done/Save is usually bold */
 }
 
 header button:disabled {
@@ -105,12 +127,14 @@ header button:disabled {
     display: none;
     height: calc(100vh - 44px);
     overflow-y: auto;
-    padding-bottom: 20px;
+    padding-bottom: 34px;
+    /* Safe area for home indicator */
+    -webkit-overflow-scrolling: touch;
 }
 
 .view.active {
     display: block;
-    animation: fadeIn 0.2s ease-in-out;
+    animation: fadeIn 0.25s ease-in-out;
 }
 
 @keyframes fadeIn {
@@ -123,40 +147,65 @@ header button:disabled {
     }
 }
 
-/* --- List View --- */
-.note-list {
+/* --- INSET GROUPED LIST STYLE (iOS) --- */
+.note-list,
+.form-group {
     list-style: none;
     padding: 0;
-    margin: 0;
+    margin: 20px 16px;
+    /* Inset margin */
     background-color: var(--ios-card);
+    border-radius: 10px;
+    /* Rounded corners for the group */
+    overflow: hidden;
+}
+
+/* Individual Items */
+.note-item,
+.form-row {
+    padding: 12px 16px;
+    background-color: var(--ios-card);
+    border-bottom: 0.5px solid var(--ios-separator);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* Remove border from last item */
+.note-item:last-child,
+.form-row:last-child {
+    border-bottom: none;
 }
 
 .note-item {
-    padding: 12px 16px;
-    border-bottom: 0.5px solid var(--ios-separator);
     cursor: pointer;
-    background-color: var(--ios-card);
+    transition: background-color 0.2s;
 }
 
 .note-item:active {
-    background-color: var(--ios-bg);
+    background-color: var(--ios-separator);
+    /* Highlight effect */
 }
 
 .note-title {
     font-weight: 600;
+    font-size: 17px;
     margin-bottom: 4px;
+    color: var(--ios-text);
 }
 
 .note-date {
-    font-size: 13px;
+    font-size: 15px;
     color: var(--ios-text-secondary);
 }
 
 /* --- Detail View --- */
 .note-detail-content {
-    padding: 16px;
+    padding: 20px 16px;
     white-space: pre-wrap;
     line-height: 1.5;
+    font-size: 17px;
+    color: var(--ios-text);
 }
 
 /* --- Editor View --- */
@@ -171,18 +220,21 @@ input.title-input {
     width: 100%;
     border: none;
     background: transparent;
-    font-size: 22px;
-    font-weight: bold;
+    font-size: 34px;
+    /* Large title style */
+    font-weight: 700;
     color: var(--ios-text);
     margin-bottom: 8px;
     padding: 8px 0;
     outline: none;
+    letter-spacing: 0.3px;
 }
 
 .filename-preview {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--ios-text-secondary);
     margin-bottom: 16px;
+    padding-left: 2px;
 }
 
 textarea.body-input {
@@ -199,72 +251,62 @@ textarea.body-input {
 }
 
 /* --- Form Elements --- */
-.form-group {
-    background-color: var(--ios-card);
-    margin-top: 20px;
-    border-top: 0.5px solid var(--ios-separator);
-    border-bottom: 0.5px solid var(--ios-separator);
-}
-
-.form-row {
-    padding: 12px 16px;
-    display: flex;
-    flex-direction: column;
-    border-bottom: 0.5px solid var(--ios-separator);
-}
-
-.form-row:last-child {
-    border-bottom: none;
-}
-
 .form-row label {
-    font-size: 13px;
-    color: var(--ios-text-secondary);
-    margin-bottom: 4px;
+    font-size: 15px;
+    color: var(--ios-text);
+    /* iOS Settings labels are usually same color as text */
+    margin-bottom: 6px;
+    font-weight: 400;
 }
 
 .form-row input {
     border: none;
     background: transparent;
     font-size: 17px;
-    color: var(--ios-text);
+    color: var(--ios-blue);
+    /* Input value often blue or text color */
     outline: none;
     width: 100%;
 }
 
+/* Button Primary (iOS Button Style - Rounded) */
 .btn-primary {
     display: block;
     width: calc(100% - 32px);
-    margin: 20px auto;
+    margin: 24px auto;
     background-color: var(--ios-blue);
     color: white;
     border: none;
-    border-radius: 10px;
+    border-radius: 12px;
     padding: 14px;
     font-size: 17px;
     font-weight: 600;
     cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .btn-primary:active {
-    opacity: 0.8;
+    transform: scale(0.98);
+    opacity: 0.9;
 }
 
 .error-message {
     color: var(--ios-red);
     text-align: center;
     margin: 10px;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 /* --- Loading Indicator --- */
 .spinner {
-    border: 3px solid rgba(0, 0, 0, 0.1);
+    border: 3px solid rgba(142, 142, 147, 0.3);
+    /* System gray track */
     border-radius: 50%;
-    border-top: 3px solid var(--ios-blue);
+    border-top: 3px solid var(--ios-text-secondary);
+    /* Darker spinner */
     width: 24px;
     height: 24px;
-    animation: spin 1s linear infinite;
+    animation: spin 0.8s linear infinite;
     margin: 20px auto;
     display: none;
 }
@@ -279,27 +321,27 @@ textarea.body-input {
     }
 }
 
-/* --- Delete Button --- */
+/* --- Delete Button (Red Action Sheet Style) --- */
+#btn-delete-nav {
+    color: var(--ios-red);
+}
+
 .btn-delete {
-    background-color: var(--ios-red);
-    color: white;
+    background-color: var(--ios-card);
+    /* White button */
+    color: var(--ios-red);
     border: none;
-    border-radius: 10px;
-    padding: 12px 24px;
-    font-size: 16px;
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 17px;
     font-weight: 600;
     cursor: pointer;
-    margin-top: 20px;
+    margin: 10px 16px;
+    /* Match form margin */
+    width: calc(100% - 32px);
+    text-align: center;
 }
 
 .btn-delete:active {
-    opacity: 0.8;
-}
-
-.btn-delete-nav:active {
-    opacity: 0.8;
-}
-
-#btn-delete-nav {
-    color: var(--ios-red);
+    background-color: var(--ios-danger-bg);
 }

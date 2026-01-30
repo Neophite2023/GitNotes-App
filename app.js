@@ -357,7 +357,7 @@ window.App = {
             alert('Chyba: ' + e.message);
         } finally {
             this.dom.btnSave.disabled = false;
-            this.dom.btnSave.innerText = 'Uložiť';
+            this.dom.btnSave.innerText = 'Hotovo';
         }
     },
 
